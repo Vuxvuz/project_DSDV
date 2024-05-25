@@ -1,37 +1,42 @@
-const width = 550;
-const height = 1200;
+// Load the CSV file
+d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provinces_vn_vi_v2.csv')
+  .then(function(data) {
+    // Create an HTML Table Element
+    const table = d3.select('body')
+      .append('table')
+      .attr('class', 'table table-striped table-bordered');
 
-// Define a projection to center the map
-const projection = d3.geoMercator()
-    .center([106, 16]) // Center coordinates
-    .scale(4000) // Zoom level
-    .translate([width / 2, height / 2]);
+    // Create table header row
+    const thead = table.append('thead');
+    const headerRow = thead.append('tr');
+    headerRow.append('th').text('Province');
+    headerRow.append('th').text('Total infected cases');
+    headerRow.append('th').text('Today infected cases');
+    headerRow.append('th').text('Deaths');
+    headerRow.append('th').text('Date');
 
-const path = d3.geoPath().projection(projection);
+    // Create table body
+    const tbody = table.append('tbody');
+    const rows = tbody.selectAll('tr')
+      .data(data)
+      .enter()
+      .append('tr');
 
-const svg = d3.select('.container')
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height);
-
-// Load GeoJSON data
-// d3.json('https://raw.githubusercontent.com/TungTh/tungth.github.io/master/data/vn-provinces.json')
-d3.json('https://raw.githubusercontent.com/TungTh/tungth.github.io/master/data/vn-provinces.json').then(function(data) {
-    // Draw the map
-    svg.selectAll('.province')
-        .data(data.features)
-        .enter()
-        .append('path')
-        .attr('class', 'province')
-        .attr('d', path)
-        .on('mouseover', function(event, d) {
-            d3.select(this)
-                .attr('fill', 'orange');
-        })
-        .on('mouseout', function(event, d) {
-            d3.select(this)
-                .attr('fill', 'lightblue');
-        });
-}).catch(function(error) {
-    console.log(error);
-});
+    // Create table cells
+    rows.selectAll('td')
+      .data(function(row) {
+        return [
+          row['Province'],
+          row['Total infected cases'],
+          row['Today infected cases'],
+          row['Deaths'],
+          row['Date']
+        ];
+      })
+      .enter()
+      .append('td')
+      .text(function(d) { return d; });
+  })
+  .catch(function(error) {
+    console.log('Error loading CSV file:', error);
+  });
