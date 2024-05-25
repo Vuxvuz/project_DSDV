@@ -2,18 +2,18 @@
 d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provinces_vn_vi_v2.csv')
   .then(function(data) {
     // Create an HTML Table Element
-    const table = d3.select('body')
+    const table = d3.select('#table-container')
       .append('table')
       .attr('class', 'table table-striped table-bordered');
 
     // Create table header row
     const thead = table.append('thead');
     const headerRow = thead.append('tr');
-    headerRow.append('th').text('Province');
-    headerRow.append('th').text('Total infected cases');
-    headerRow.append('th').text('Today infected cases');
-    headerRow.append('th').text('Deaths');
-    headerRow.append('th').text('Date');
+    headerRow.append('th').text('Tỉnh');
+    headerRow.append('th').text('Tổng số ca lây nhiễm');
+    headerRow.append('th').text('Số ca lây nhiễm mới');
+    headerRow.append('th').text('Tổng số ca tử vong');
+    headerRow.append('th').text('Ngày');
 
     // Create table body
     const tbody = table.append('tbody');
@@ -26,11 +26,11 @@ d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provi
     rows.selectAll('td')
       .data(function(row) {
         return [
-          row['Province'],
-          row['Total infected cases'],
-          row['Today infected cases'],
-          row['Deaths'],
-          row['Date']
+          row['Tỉnh'],
+          row['Tổng số ca lây nhiễm'],
+          row['Số ca lây nhiễm mới'],
+          row['Tổng số ca tử vong'],
+          row['Ngày']
         ];
       })
       .enter()
