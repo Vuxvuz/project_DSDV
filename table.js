@@ -1,18 +1,18 @@
-// Load the CSV file
-d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provinces_vn_vi_v2.csv')
+// Load the CSV file with semicolon delimiter
+d3.dsv(';', 'https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provinces_vn_vi_v2.csv')
   .then(function(data) {
     console.log('Raw data:', data);
 
-    // Parse numeric values
+    // Parse numeric values and fix data type issues
     data.forEach(d => {
-      d['Tổng số ca lây nhiễm'] = +d['Tổng số ca lây nhiễm'];
-      d['Số ca lây nhiễm mới'] = +d['Số ca lây nhiễm mới'];
-      d['Tổng số ca tử vong'] = +d['Tổng số ca tử vong'];
+      d['Tổng số ca lây nhiễm'] = parseInt(d['Tổng số ca lây nhiễm'].replace(/\./g, '')) || 0;
+      d['Số ca lây nhiễm mới'] = +d['Số ca lây nhiễm mới'] || 0;
+      d['Tổng số ca tử vong'] = +d['Tổng số ca tử vong'] || 0;
     });
 
     console.log('Parsed data:', data);
 
-    // Parse date values (assuming date format 'DD-MM-YYYY')
+    // Parse date values (assuming date format 'dd-mm-yyyy')
     const parseDate = d3.timeParse('%d-%m-%Y');
     data.forEach(d => {
       d['Ngày'] = parseDate(d['Ngày']);
@@ -47,7 +47,7 @@ d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provi
           row['Tổng số ca lây nhiễm'],
           row['Số ca lây nhiễm mới'],
           row['Tổng số ca tử vong'],
-          row['Ngày']
+          row['Ngày'] ? d3.timeFormat('%d-%m-%Y')(row['Ngày']) : ''
         ];
       })
       .enter()
