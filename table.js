@@ -1,8 +1,25 @@
 // Load the CSV file
 d3.csv('https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-provinces_vn_vi_v2.csv')
   .then(function(data) {
+    console.log('Raw data:', data);
+
+    // Parse numeric values
+    data.forEach(d => {
+      d['Tổng số ca lây nhiễm'] = +d['Tổng số ca lây nhiễm'];
+      d['Số ca lây nhiễm mới'] = +d['Số ca lây nhiễm mới'];
+      d['Tổng số ca tử vong'] = +d['Tổng số ca tử vong'];
+    });
+
+    console.log('Parsed data:', data);
+
+    // Parse date values (assuming date format 'DD-MM-YYYY')
+    const parseDate = d3.timeParse('%d-%m-%Y');
+    data.forEach(d => {
+      d['Ngày'] = parseDate(d['Ngày']);
+    });
+
     // Create an HTML Table Element
-    const table = d3.select('#table-container')
+    const table = d3.select('body')
       .append('table')
       .attr('class', 'table table-striped table-bordered');
 
