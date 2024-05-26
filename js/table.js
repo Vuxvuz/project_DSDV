@@ -12,10 +12,19 @@ d3.dsv(';', 'https://raw.githubusercontent.com/Vuxvuz/project_DSDV/main/covid19-
 
     console.log('Parsed data:', data);
 
-    // Parse date values (assuming date format 'dd-mm-yyyy')
-    const parseDate = d3.timeParse('%d-%m-%Y');
+    // Parse date values (assuming date format 'mm-dd-yyyy')
+    const parseDate = d3.timeParse('%m-%d-%Y');
     data.forEach(d => {
       d['Ngày'] = parseDate(d['Ngày']);
+    });
+
+    // Sort data by "Ngày" in increasing order and then by "Tỉnh" in alphabetical order
+    data.sort((a, b) => {
+      if (a['Ngày'] < b['Ngày']) return -1;
+      if (a['Ngày'] > b['Ngày']) return 1;
+      if (a['Tỉnh'] < b['Tỉnh']) return -1;
+      if (a['Tỉnh'] > b['Tỉnh']) return 1;
+      return 0;
     });
 
     // Create an HTML Table Element
