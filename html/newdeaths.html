@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <style>
+    .tooltip {
+      position: absolute;
+      text-align: center;
+      padding: 8px;
+      font-size: 14px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+    .axis-label {
+      font-size: 12px;
+      font-family: sans-serif;
+    }
+    .bar {
+      fill: steelblue;
+    }
+    .bar:hover {
+      fill: orange;
+    }
+    #controls {
+      text-align: center;
+      margin: 20px;
+    }
+    #date-label {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 10px;
+    }
+    .checkbox-group label {
+      display: block;
+      margin-right: 10px;
+    }
+    .sort-controls {
+      margin-bottom: 10px;
+    }
+    .search-box {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2 class="chart-title">COVID-19 New Deaths by Country</h2>
+  <div id="tooltip" class="tooltip" style="opacity:0;"></div>
+  <div id="controls">
+    <label for="date-slider">Select Date:</label>
+    <input type="range" id="date-slider" min="0" max="0" value="0" step="1" style="width: 80%;">
+    <div id="date-label"></div>
+    <div class="sort-controls">
+      <label for="sort-selector">Sort by:</label>
+      <select id="sort-selector">
+        <option value="name">Country name</option>
+        <option value="cases">New cases</option>
+      </select>
+    </div>
+    <div class="search-box">
+      <label for="search-input">Search Country:</label>
+      <input type="text" id="search-input" placeholder="Enter country name">
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="select-all-checkbox">
+        Select All
+      </label>
+    </div>
+    <div class="checkbox-group" id="country-checkboxes"></div>
+  </div>
+  <button onclick="loadDeathPage()">Load Death Page</button>
+  <svg width="960" height="500"></svg>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script>
+    // Tooltip setup
+    var tooltip = d3.select("#tooltip");
+
+    // SVG setup
+    var svg = d3.select("svg"),
+        margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Scales and axes setup
+    var x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+        y = d3.scaleLinear().rangeRound([height, 0]);
+
+    var xAxis = d3.axisBottom(x),
+        yAxis = d3.axisLeft(y);
+
+    g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")");
+
+    g.append("g")
+      .attr("class", "axis axis--y");
+
+    // Load CSV data
+    d3.csv("/Users/vuzvux/Documents/dsdv/project_DSDV/covid_data.csv").then(function(data) {
+      // Process data
+      var nestedData = d3.group(data, d => d.Date_reported);
+      var dates = [...nestedData.keys()];
+      dates.sort((a, b) => new Date(a) - new Date(b));
+
+      // Populate slider
+      var slider = d3.select("#date-slider");
+      slider.attr("max", dates.length - 1);
+
+      // Populate country checkboxes
+      var allCountries = Array.from(new Set(data.map(d => d.Country))).sort();
+      var countryCheckboxes = d3.select("#country-checkboxes");
+      countryCheckboxes.selectAll("label")
+        .data(allCountries)
+        .enter().append("label")
+        .text(d => d)
+        .append("input")
+        .attr("type", "checkbox")
+        .attr("value", d => d)
+        .property("checked", false);  // Initialize as unchecked
+
+      // Add event listener for select all checkbox
+      d3.select("#select-all-checkbox").on("change", function() {
+        var isChecked = this.checked;
+        countryCheckboxes.selectAll("input")
+          .property("checked", isChecked);
+        update(dates[slider.property("value")]);
+      });
+
+      // Add event listener for search input
+      d3.select("#search-input").on("input", function() {
+        var searchText = this.value.toLowerCase();
+        countryCheckboxes.selectAll("label")
+          .style("display", d => d.toLowerCase().includes(searchText) ? "block" : "none");
+      });
+
+      // Initial update
+      update(dates[0]);
+
+      // On slider or checkbox change
+      slider.on("input", function() {
+        update(dates[this.value]);
+      });
+
+      countryCheckboxes.on("change", function() {
+        update(dates[slider.property("value")]);
+      });
+
+      d3.select("#sort-selector").on("change", function() {
+        update(dates[slider.property("value")]);
+      });
+
+      // Update function
+      function update(date) {
+        var selectedCountries = Array.from(countryCheckboxes.selectAll("input:checked").nodes()).map(d => d.value);
+        var dataForDate = nestedData.get(date).filter(d => selectedCountries.includes(d.Country));
+
+        // Update date label
+        d3.select("#date-label").text(date);
+
+        // Sort data based on selected option
+        var sortBy = d3.select("#sort-selector").property("value");
+        if (sortBy === "deaths") {
+          dataForDate.sort((a, b) => +b.New_deaths - +a.New_deaths);
+        } else {
+          dataForDate.sort((a, b) => d3.ascending(a.Country, b.Country));
+        }
+
+        x.domain(dataForDate.map(d => d.Country));
+        y.domain([0, d3.max(dataForDate, d => +d.New_deaths)]);
+
+        g.selectAll(".axis--x").call(xAxis);
+        g.selectAll(".axis--y").call(yAxis);
+
+        var bars = g.selectAll(".bar")
+          .data(dataForDate, d => d.Country);
+
+        bars.enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", d => x(d.Country))
+          .attr("y", d => y(+d.New_deaths))
+          .attr("width", x.bandwidth())
+          .attr("height", d => height - y(+d.New_deaths))
+          .on("mouseover", function(event, d) {
+            tooltip.transition().duration(200).style("opacity", .9);
+            tooltip.html("Country: " + d.Country + "<br/>Deaths: " + d.New_deaths)
+              .style("left", (event.pageX) + "px")
+              .style("top", (event.pageY - 28) + "px");
+          })
+          .on("mouseout", function(d) {
+            tooltip.transition().duration(500).style("opacity", 0);
+          });
+
+        bars.transition()
+          .duration(750)
+          .attr("x", d => x(d.Country))
+          .attr("y", d => y(+d.New_deaths))
+          .attr("width", x.bandwidth())
+          .attr("height", d => height - y(+d.New_deaths));
+
+        bars.exit().remove();
+      }
+    }).catch(function(error) {
+      console.error('Error loading or parsing data:', error);
+    });
+    function loadDeathPage() {
+    window.location.href = "death.html";
+}
+  </script>
+</body>
+</html>
