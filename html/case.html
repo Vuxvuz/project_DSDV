@@ -99,7 +99,7 @@ svg.select(".legendThreshold")
 // Load external data and boot
 d3.queue()
     .defer(d3.json, "http://enjalot.github.io/wwsd/data/world/world-110m.geojson")
-    .defer(d3.csv, "/Users/vuzvux/Documents/dsdv/project_DSDV/data-countries.csv", function(d) { data.set(d.code, +d.case); })
+    .defer(d3.csv, "https://github.com/Vuxvuz/project_DSDV/blob/main/data-countries.csv", function(d) { data.set(d.code, +d.case); })
     .await(ready);
 
     function ready(error, topo) {

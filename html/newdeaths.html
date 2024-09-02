@@ -105,7 +105,7 @@
       .attr("class", "axis axis--y");
 
     // Load CSV data
-    d3.csv("/Users/vuzvux/Documents/dsdv/project_DSDV/covid_data.csv").then(function(data) {
+    d3.csv("https://github.com/Vuxvuz/project_DSDV/blob/main/covid_data.csv").then(function(data) {
       // Process data
       var nestedData = d3.group(data, d => d.Date_reported);
       var dates = [...nestedData.keys()];
